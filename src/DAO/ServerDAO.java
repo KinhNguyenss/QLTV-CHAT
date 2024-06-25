@@ -28,14 +28,24 @@ public class ServerDAO{
         } catch (Exception e) {
         }
     }
-    public void stop(){
-      try {
-     serverSocket.close();
-      keepGoing = false;
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
+        public void stop() {
+        try {
+        broadcastServerStop();
+        serverSocket.close();
+        keepGoing = false;
+    } catch (IOException e) {
+        System.out.println(e.getMessage());
+    }
+}
+
+         private void broadcastServerStop() {
+        synchronized (clients) {
+        for (ClientHandler client : clients) {
+            client.out.println("SERVER_STOP");
         }
     }
+}
+
     public void start() {
         serverThread = new Thread(this::run);
         serverThread.start();
@@ -117,7 +127,7 @@ public class ServerDAO{
                 e.printStackTrace();
             }
         }
-
+        // hiển thị lên mess cũ
         private void sendExistingMessages() {
             try {
                 PreparedStatement stmt = conn.prepareStatement("SELECT u.username, m.message, m.timestamp FROM Messages m JOIN Users u ON m.sender_id = u.id ORDER BY m.timestamp");
@@ -134,7 +144,7 @@ public class ServerDAO{
                 e.printStackTrace();
             }
         }
-
+        
         private void sendOnlineUsers() {
             synchronized (clients) {
                 out.println("ONLINE_USERS_START");
@@ -147,14 +157,30 @@ public class ServerDAO{
             }
         }
 
-        private void broadcastUserStatus(String username, boolean isOnline) {
-            synchronized (clients) {
-                String statusMessage = isOnline ? "USER_ONLINE" : "USER_OFFLINE";
-                for (ClientHandler client : clients) {
-                    client.out.println(statusMessage + ":" + username);
-                }
-            }
+//        private void broadcastUserStatus(String username, boolean isOnline) {
+//            synchronized (clients) {
+//                String statusMessage = isOnline ? "USER_ONLINE" : "USER_OFFLINE";
+//                for (ClientHandler client : clients) {
+//                    client.out.println(statusMessage + ":" + username);
+//                }
+//            }
+//        }
+        // Phương thức để phát thông báo trạng thái trực tuyến/ngoại tuyến của người dùng tới tất cả clients.
+private void broadcastUserStatus(String username, boolean isOnline) {
+    synchronized (clients) { // Đồng bộ hóa trên danh sách clients để ngăn ngừa thay đổi đồng thời.
+        String statusMessage;
+        if (isOnline) {
+            statusMessage = "USER_ONLINE"; // Xác định tin nhắn trạng thái khi người dùng trực tuyến.
+        } else {
+            statusMessage = "USER_OFFLINE"; // Xác định tin nhắn trạng thái khi người dùng ngoại tuyến.
         }
+        // Lặp qua danh sách clients.
+        for (ClientHandler client : clients) {
+            client.out.println(statusMessage + ":" + username); // Gửi tin nhắn trạng thái tới từng client.
+        }
+    }
+}
+
 
         private void broadcastMessage(String message) {
             synchronized (clients) {

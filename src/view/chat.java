@@ -271,7 +271,11 @@ private static final int PORT = 5000;
             String message;
             try {
                 while ((message = in.readLine()) != null) {
-                    if (message.startsWith("ONLINE_USERS_START")) {
+                    if (message.equals("SERVER_STOP")) {
+                    handleServerStop();
+                    break;
+                    }
+                    else if (message.startsWith("ONLINE_USERS_START")) {
                         danhSach.setText("");
                         while (!(message = in.readLine()).equals("ONLINE_USERS_END")) {
                             danhSach.append(message + "\n");
@@ -287,7 +291,7 @@ private static final int PORT = 5000;
                     }
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                handleServerStop();
             }
         }
     }
@@ -298,4 +302,10 @@ private static final int PORT = 5000;
             tinNhanTxt.setText("");
         }
     }
+     private void handleServerStop() {
+    JOptionPane.showMessageDialog(chat.this, "Server has stopped. The application will close.", "Server Stopped", JOptionPane.ERROR_MESSAGE);
+    System.exit(0);
+    function f = new function();
+    f.show();
+}
 }
